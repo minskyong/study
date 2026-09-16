@@ -33,7 +33,8 @@ product = pd.DataFrame({
                         #   format = (숫자)
 st.dataframe(           
     product ,
-    column_config = {'단가' : st.column_config.NumberColumn('단가(원)', format = '%,d원')}
+    column_config = {'단가' : st.column_config.NumberColumn('단가(원)', format = '%,d원')
+                     }, hide_index = True
 )
 
 
@@ -46,7 +47,7 @@ achievements_data = pd.DataFrame({
 st.dataframe(achievements_data,
              column_config = {
                  '달성률': st.column_config.NumberColumn('목표 달성률', format = '%d%%')
-             })
+             }, hide_index = True)
 
 
 st.write('---')
@@ -76,6 +77,8 @@ st.metric(
 
 
 )
+st.write('---')
+
 #성장률 보기
 current_sales = 35_000_000
 previous_sales = 32_500_000

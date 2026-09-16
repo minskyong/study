@@ -22,16 +22,16 @@ with st.sidebar:
 
 
 if menu == '북항' :
-    with st.container():
+   
             st.title('북항')
             st.write('북항입니다.')
 elif menu == '신항' :
-        with st.container():
+   
             st.title('신항')
             st.write('신항이다.')
 
 elif menu == '신항2' :
-        with st.container():
+       
             st.title('신항2')   
             st.write('신항2')
 

@@ -36,7 +36,7 @@ data = pd.DataFrame(
                     30]
             }
 )
-#st.dataframe(data, hide_index = True)
+st.dataframe(data,hide_index = True)
 
 #컬럼 위치 수정 방법 
 #fig, ax
@@ -76,6 +76,8 @@ with customers_kpi:
         st.subheader('고객 수')
         st.metric(label ='오늘 고객 수',
               value = '874명')
+
+st.write('---')
 
 
 left, right = st.columns([2, 1])

@@ -11,7 +11,6 @@ from variable.tr_a import tr_analysis
 from variable.s_a import season_analysis
 from variable.c_data import check_data
 
-
 st.set_page_config(
     page_title = 'project',
     page_icon = ('🫆'),
@@ -50,12 +49,10 @@ elif menu == '계절성 분석':
     season_analysis()
 
 elif menu == '데이터 확인':
-    check_data()
-    
+   check_data()
   
     
 
 #토글 형식 눌러서 들어가기 가능  st.selectbox()
 
 
-st.title('TEST')

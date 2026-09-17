@@ -12,7 +12,6 @@ from variable.s_a import season_analysis
 from variable.c_data import check_data
 
 
-
 st.set_page_config(
     page_title = 'project',
     page_icon = ('🫆'),

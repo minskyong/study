@@ -1,7 +1,7 @@
 import pandas as pd 
 import numpy as np
 import streamlit as st
-import matplotlib.pyplot as plt 
+
 
 from variable.o_status import port_ratio
 from variable.y_throughput import year_throughput

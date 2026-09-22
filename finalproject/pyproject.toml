@@ -7,7 +7,9 @@ authors = [
     { name = "minskyong", email = "fiterpen9@naver.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "plotly>=7.1.0",
+]
 
 [project.scripts]
 finalproject = "finalproject:main"

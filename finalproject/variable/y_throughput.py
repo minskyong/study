@@ -3,10 +3,12 @@ import streamlit as st
 import plotly.express as px
 
 
-csv_PATH = r'C:\work\finalproject\data\container.csv'
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+csv_PATH = BASE_DIR / 'data' / 'container.csv'
 
 df = pd.read_csv(csv_PATH, encoding='utf-8')
-
 
 def year_throughput():
 

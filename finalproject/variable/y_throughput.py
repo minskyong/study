@@ -541,3 +541,321 @@ def year_throughput():
         fig_group_ratio,
         use_container_width=True
     )
+
+
+    st.write('---')
+        # ==========================================
+    # KPI 분석
+    # ==========================================
+
+    st.write('---')
+    st.header('북항 · 신항 KPI 분석')
+
+    # 연도 기준 정렬
+    kpi_df = port_group.sort_values('년도').copy()
+
+    # 시작 / 종료 데이터
+    start_data = kpi_df[kpi_df['년도'] == 2012].iloc[0]
+    end_data = kpi_df[kpi_df['년도'] == 2024].iloc[0]
+
+    # 분석 기간
+    years = 2024 - 2012
+
+    # ==========================================
+    # 1. CAGR
+    # ==========================================
+
+    new_port_cagr = (
+        (end_data['신항'] / start_data['신항']) ** (1 / years) - 1
+    ) * 100
+
+    north_port_cagr = (
+        (end_data['북항'] / start_data['북항']) ** (1 / years) - 1
+    ) * 100
+
+
+    # ==========================================
+    # 2. 2024년 신항 점유율
+    # ==========================================
+
+    new_port_share_2024 = end_data['신항비율']
+
+
+    # ==========================================
+    # 3. 2012 → 2024 신항 점유율 변화폭
+    # ==========================================
+
+    share_change = (
+        end_data['신항비율']
+        - start_data['신항비율']
+    )
+
+
+    # ==========================================
+    # KPI 카드 출력
+    # ==========================================
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            label='신항 CAGR',
+            value=f'{new_port_cagr:.2f}%'
+        )
+
+    with col2:
+        st.metric(
+            label='북항 CAGR',
+            value=f'{north_port_cagr:.2f}%'
+        )
+
+    with col3:
+        st.metric(
+            label='2024 신항 점유율',
+            value=f'{new_port_share_2024:.2f}%'
+        )
+
+    with col4:
+        st.metric(
+            label='신항 점유율 변화',
+            value=f'{share_change:+.2f}%p',
+            delta='2012 → 2024'
+        )
+
+
+    # ==========================================
+    # YoY 증감률
+    # ==========================================
+
+    kpi_df['신항_YoY'] = (
+        kpi_df['신항']
+        .pct_change()
+        * 100
+    )
+
+    kpi_df['북항_YoY'] = (
+        kpi_df['북항']
+        .pct_change()
+        * 100
+    )
+
+    st.subheader('북항 · 신항 전년 대비 증감률 (YoY)')
+
+    fig_yoy = px.line(
+        kpi_df,
+        x='년도',
+        y=['신항_YoY', '북항_YoY'],
+        markers=True
+    )
+
+    fig_yoy.update_xaxes(
+        tickmode='linear',
+        dtick=1
+    )
+
+    fig_yoy.update_layout(
+        xaxis_title='년도',
+        yaxis_title='전년 대비 증감률 (%)',
+        legend_title='구분',
+        yaxis=dict(
+            ticksuffix='%'
+        )
+    )
+
+    fig_yoy.add_hline(
+        y=0,
+        line_dash='dash'
+    )
+
+    st.plotly_chart(
+        fig_yoy,
+        use_container_width=True
+    )
+
+
+    # ==========================================
+    # 북항 → 신항 물동량 중심 이동
+    # ==========================================
+
+    st.subheader('부산항 컨테이너 물동량 중심 이동')
+
+    shift_df = kpi_df[
+        ['년도', '북항비율', '신항비율']
+    ].copy()
+
+    fig_shift = px.area(
+        shift_df,
+        x='년도',
+        y=['북항비율', '신항비율']
+    )
+
+    fig_shift.update_xaxes(
+        tickmode='linear',
+        dtick=1
+    )
+
+    fig_shift.update_layout(
+        xaxis_title='년도',
+        yaxis_title='전체 물동량 대비 점유율 (%)',
+        legend_title='구분',
+        yaxis=dict(
+            ticksuffix='%'
+        )
+    )
+
+    st.plotly_chart(
+        fig_shift,
+        use_container_width=True
+    )
+
+
+    # ==========================================
+    # 변동성
+    # YoY 증감률의 표준편차
+    # ==========================================
+
+    new_port_volatility = (
+        kpi_df['신항_YoY'].std()
+    )
+
+    north_port_volatility = (
+        kpi_df['북항_YoY'].std()
+    )
+
+
+    st.subheader('물동량 증감률 변동성')
+
+    vol_col1, vol_col2 = st.columns(2)
+
+    with vol_col1:
+        st.metric(
+            label='신항 변동성',
+            value=f'{new_port_volatility:.2f}%p'
+        )
+
+    with vol_col2:
+        st.metric(
+            label='북항 변동성',
+            value=f'{north_port_volatility:.2f}%p'
+        )
+
+
+    # ==========================================
+    # KPI 해석
+    # ==========================================
+
+    st.subheader('KPI 분석 결과')
+
+    st.write(
+        f'''
+        - 신항의 2012~2024년 연평균 성장률(CAGR)은
+          :red[{new_port_cagr:.2f}%]로 나타남.
+
+        - 북항의 같은 기간 CAGR은
+          :blue[{north_port_cagr:.2f}%]로 나타남.
+
+        - 신항의 부산항 전체 물동량 점유율은
+          2012년 :blue[{start_data['신항비율']:.2f}%]에서
+          2024년 :red[{end_data['신항비율']:.2f}%]로 변화함.
+
+        - 12년간 신항 점유율은
+          :red[{share_change:+.2f}%p] 변화함.
+
+        - 이를 통해 부산항 컨테이너 물동량의 중심이
+          장기적으로 북항에서 신항 방향으로 이동한 것을 확인할 수 있음.
+        '''
+    )
+
+    port_group['북항신항합계'] = (
+    port_group['북항'] + port_group['신항']
+)
+
+    port_group['북항상대점유율'] = (
+        port_group['북항']
+        / port_group['북항신항합계']
+        * 100
+    )
+
+    port_group['신항상대점유율'] = (
+        port_group['신항']
+        / port_group['북항신항합계']
+        * 100
+    )
+
+    st.write('---')
+    st.header('북항 · 신항 물동량 중심 이동 KPI')
+
+    kpi_df = port_group.sort_values('년도').copy()
+
+    start_data = kpi_df[
+        kpi_df['년도'] == 2012
+    ].iloc[0]
+
+    end_data = kpi_df[
+        kpi_df['년도'] == 2024
+    ].iloc[0]
+
+    period = 2024 - 2012
+
+
+    # ==========================================
+    # CAGR
+    # ==========================================
+
+    new_port_cagr = (
+        (end_data['신항'] / start_data['신항'])
+        ** (1 / period)
+        - 1
+    ) * 100
+
+
+    north_port_cagr = (
+        (end_data['북항'] / start_data['북항'])
+        ** (1 / period)
+        - 1
+    ) * 100
+
+
+    # ==========================================
+    # 점유율
+    # ==========================================
+
+    new_share_2012 = start_data['신항상대점유율']
+    new_share_2024 = end_data['신항상대점유율']
+
+    share_change = (
+        new_share_2024 - new_share_2012
+    )
+
+
+    # ==========================================
+    # KPI 카드
+    # ==========================================
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            '신항 CAGR',
+            f'{new_port_cagr:.2f}%'
+        )
+
+    with col2:
+        st.metric(
+            '북항 CAGR',
+            f'{north_port_cagr:.2f}%'
+        )
+
+    with col3:
+        st.metric(
+            '2024 신항 상대 점유율',
+            f'{new_share_2024:.2f}%'
+        )
+
+    with col4:
+        st.metric(
+            '신항 점유율 변화',
+            f'{share_change:+.2f}%p',
+            delta='2012 → 2024'
+        )
+    

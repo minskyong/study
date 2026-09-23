@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from statsmodels.tsa.arima.model import ARIMA
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+
 from pathlib import Path
 import numpy as np
 
@@ -1070,16 +1070,15 @@ def year_throughput():
     # 평가 지표
     # ==========================================
 
-    mae = mean_absolute_error(
-        backtest_result['실제물동량'],
-        backtest_result['예측물동량']
+    actual = backtest_result['실제물동량']
+    pred = backtest_result['예측물동량']
+
+    mae = np.mean(
+        np.abs(actual - pred)
     )
 
     rmse = np.sqrt(
-        mean_squared_error(
-            backtest_result['실제물동량'],
-            backtest_result['예측물동량']
-        )
+        np.mean((actual - pred) ** 2)
     )
 
     mape = (

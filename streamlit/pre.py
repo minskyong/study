@@ -98,3 +98,4 @@ st.metric(
         delta = '-0.8시간',
         delta_color =  'inverse'     # 감소가 긍정일 경우 inverse 사용해서  delta 색변경 
 )
+

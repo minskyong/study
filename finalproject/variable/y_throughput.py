@@ -1,3 +1,4 @@
+import statsmodels.api as sm
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -184,10 +185,8 @@ def year_throughput():
     )
 
 
-    # --------------------------------
     # 부두별 필요한 컬럼만 선택
-    # --------------------------------
-
+    
     port_columns = [
         '년도',
         '합계',
@@ -205,19 +204,18 @@ def year_throughput():
     new_port = new_port[port_columns]
 
 
-    # --------------------------------
+   
     # 부두별 데이터 확인
-    # --------------------------------
+    
 
    
 
    
 
 
-    # ========================================
+   
     # 부두별 물동량 선그래프
-    # ========================================
-
+    
     fig_port = px.line(
         new_port,
         x='년도',
@@ -439,11 +437,11 @@ def year_throughput():
     st.write('---')
 
 
-        # ==========================================
+      
     # 북항 · 신항 물동량 비율 분석
-    # ==========================================
+    
 
-    # 북항에 포함되는 부두
+    
     north_ports = [
         '자성대부두',
         '신선대부두',
@@ -452,29 +450,29 @@ def year_throughput():
         '신감만부두'
     ]
 
-    # 신항에 포함되는 부두
+    
     new_ports = [
         '신항부두'
     ]
 
-    # 복사
+   
     port_group = new_port.copy()
 
-    # -----------------------------
+    
     # 북항 물동량 계산
-    # -----------------------------
+  
     port_group['북항'] = port_group[north_ports].sum(axis=1)
 
-    # -----------------------------
+    
     # 신항 물동량 계산
-    # -----------------------------
+  
     # 앞에서 이미 신항1~5부두를 합쳐
-    # '신항부두'로 만들었기 때문에 이것을 사용
+    #'신항부두'로 만들었기 때문에 이것을 사용
     port_group['신항'] = port_group['신항부두']
 
-    # -----------------------------
+   
     # 북항 · 신항 비율 계산
-    # -----------------------------
+   
     port_group['북항비율'] = (
         port_group['북항'] / port_group['합계'] * 100
     )
@@ -484,9 +482,9 @@ def year_throughput():
     )
 
 
-    # ==========================================
+    
     # 북항 · 신항 비율 표
-    # ==========================================
+   
 
     st.subheader('북항 · 신항 물동량 비율')
 
@@ -504,10 +502,9 @@ def year_throughput():
     )
 
 
-    # ==========================================
+    
     # 북항 · 신항 비율 비교
-    # ==========================================
-
+   
   
 
     fig_group_ratio = px.bar(
@@ -544,9 +541,9 @@ def year_throughput():
 
 
     st.write('---')
-        # ==========================================
+        
     # KPI 분석
-    # ==========================================
+    
 
     st.write('---')
     st.header('북항 · 신항 KPI 분석')
@@ -574,26 +571,23 @@ def year_throughput():
     ) * 100
 
 
-    # ==========================================
-    # 2. 2024년 신항 점유율
-    # ==========================================
+    
+    #  2024년 신항 점유율
+   
 
     new_port_share_2024 = end_data['신항비율']
 
 
-    # ==========================================
-    # 3. 2012 → 2024 신항 점유율 변화폭
-    # ==========================================
-
+    
+    #  2012 → 2024 신항 점유율 변화폭
+    
     share_change = (
         end_data['신항비율']
         - start_data['신항비율']
     )
 
 
-    # ==========================================
-    # KPI 카드 출력
-    # ==========================================
+  
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -623,13 +617,13 @@ def year_throughput():
         )
 
 
-    # ==========================================
+   
     # YoY 증감률
-    # ==========================================
+   
 
     kpi_df['신항_YoY'] = (
         kpi_df['신항']
-        .pct_change()
+        .pct_change()   #현재 행과 이전 행의 변화율을 계산하는 함수
         * 100
     )
 
@@ -709,10 +703,10 @@ def year_throughput():
     )
 
 
-    # ==========================================
+   
     # 변동성
     # YoY 증감률의 표준편차
-    # ==========================================
+   
 
     new_port_volatility = (
         kpi_df['신항_YoY'].std()
@@ -740,9 +734,9 @@ def year_throughput():
         )
 
 
-    # ==========================================
+    
     # KPI 해석
-    # ==========================================
+   
 
     st.subheader('KPI 분석 결과')
 
@@ -782,6 +776,15 @@ def year_throughput():
         * 100
     )
 
+    
+
+
+
+
+
+
+
+
     st.write('---')
     st.header('북항 · 신항 물동량 중심 이동 KPI')
 
@@ -798,9 +801,9 @@ def year_throughput():
     period = 2024 - 2012
 
 
-    # ==========================================
+    
     # CAGR
-    # ==========================================
+   
 
     new_port_cagr = (
         (end_data['신항'] / start_data['신항'])
@@ -816,9 +819,9 @@ def year_throughput():
     ) * 100
 
 
-    # ==========================================
+    
     # 점유율
-    # ==========================================
+    
 
     new_share_2012 = start_data['신항상대점유율']
     new_share_2024 = end_data['신항상대점유율']
@@ -828,9 +831,9 @@ def year_throughput():
     )
 
 
-    # ==========================================
-    # KPI 카드
-    # ==========================================
+   
+    # KPI 
+   
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -859,3 +862,92 @@ def year_throughput():
             delta='2012 → 2024'
         )
     
+
+    st.write('---')
+
+
+    st.subheader('북항·신항 연도별 물동량 추세 분석')
+
+    
+
+        
+    # 신항 회귀분석
+    
+    fig_new_reg = px.scatter(
+        kpi_df,
+        x='년도',
+        y='신항',
+        trendline='ols',
+        title='신항 물동량 회귀 추세'
+    )
+
+    fig_new_reg.update_xaxes(
+        tickmode='linear',
+        tick0=2012,
+        dtick=1
+    )
+
+    # 신항 회귀분석 결과
+    new_results = px.get_trendline_results(fig_new_reg)
+    new_model = new_results.iloc[0]['px_fit_results']
+
+    new_slope = new_model.params[1]
+    new_r2 = new_model.rsquared
+
+    st.plotly_chart(fig_new_reg, use_container_width=True)
+
+    
+    st.markdown(
+    f"""
+    
+
+    - 연간 추세 변화량(기울기): **{new_slope:,.0f} TEU/년**
+    - 결정계수(R²): **{new_r2:.3f}**
+    """
+)
+
+
+   
+    # 북항 회귀분석
+    
+    fig_north_reg = px.scatter(
+        kpi_df,
+        x='년도',
+        y='북항',
+        trendline='ols',
+        title='북항 물동량 회귀 추세'
+    )
+
+    fig_north_reg.update_xaxes(
+        tickmode='linear',
+        tick0=2012,
+        dtick=1
+    )
+
+    # 북항 회귀분석 결과
+    north_results = px.get_trendline_results(fig_north_reg)
+    north_model = north_results.iloc[0]['px_fit_results']
+
+    north_slope = north_model.params[1]
+    north_r2 = north_model.rsquared
+
+    st.plotly_chart(fig_north_reg, use_container_width=True)
+
+    
+    st.markdown(
+        f"""
+        
+
+        - 연간 추세 변화량(기울기): **{north_slope:,.0f} TEU/년**
+        - 결정계수(R²): **{north_r2:.3f}**
+
+        **북항 연간 물동량은 예측하기 좋은 데이터는 아니다.**
+        """
+    )
+
+    st.write('신항 = 꾸준하게 커지는 패턴')
+    st.write('북항 = 전체적인 방향은 감소 쪽이지만, 오르내림이 있어서 단순한 직선으로 설명하기 어려움')
+
+
+    st.write('---')
+    st.write('ARIMA 분석 통해 다시 해볼 것')

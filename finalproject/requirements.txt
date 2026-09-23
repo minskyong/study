@@ -4,3 +4,4 @@ plotly
 matplotlib
 statsmodels
 scikit-learn
+numpy

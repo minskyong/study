@@ -2,9 +2,10 @@ import statsmodels.api as sm
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-
-
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from pathlib import Path
+import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 csv_PATH = BASE_DIR / 'data' / 'container.csv'
@@ -951,3 +952,200 @@ def year_throughput():
 
     st.write('---')
     st.write('ARIMA 분석 통해 다시 해볼 것')
+    st.write('---')
+    st.write(
+            
+            'ARIMA 시계열 모델을 이용하여 과거 신항 물동량의 시간적 변화 패턴을 학습  \n '
+            '향후 물동량을 예측하는 테스트를 수행  ' 
+            '  \n 다만 미래 예측값은 아직 실제값과 비교할 수 없음' 
+            '  \n 모델의 예측 성능을 확인하기 위해 백테스트를 추가로 진행 ' 
+            '  \n 2012부터 2021년 데이터를 학습 데이터로 사용하고, 모델이 보지 못한 2022~2024년을 예측하도록 한 뒤 실제 물동량과 비교 ' 
+            '  \n 이후 MAE, RMSE, MAPE를 이용해 실제값과 예측값의 차이를 평가')
+    # ARIMA 테스트
+    st.divider()
+    st.subheader('ARIMA 연간 물동량 예측 테스트')
+
+    # 신항 데이터
+    arima_df = kpi_df[['년도', '신항']].copy()
+    arima_df = arima_df.sort_values('년도')
+
+    # ARIMA(1,1,1)
+    arima_model = ARIMA(
+        arima_df['신항'],
+        order=(1, 1, 1)
+    )
+
+    arima_fit = arima_model.fit()
+
+    # 향후 3년 예측
+    forecast = arima_fit.forecast(steps=3)
+
+    last_year = int(arima_df['년도'].max())
+
+    forecast_df = pd.DataFrame({
+        '년도': [
+            last_year + 1,
+            last_year + 2,
+            last_year + 3
+        ],
+        '예측물동량': forecast.values
+    })
+
+    st.dataframe(forecast_df)
+
+    st.write('벡테스트')
+
+    # ==========================================
+    # ARIMA 백테스트
+    # 2012~2021 학습
+    # 2022~2024 예측
+    # ==========================================
+
+    st.subheader('신항 ARIMA 백테스트')
+
+    bt_df = kpi_df[
+        ['년도', '신항']
+    ].copy()
+
+    bt_df = bt_df.sort_values('년도')
+
+
+    # 학습 데이터
+    train = bt_df[
+        bt_df['년도'] <= 2021
+    ].copy()
+
+
+    # 테스트 데이터
+    test = bt_df[
+        bt_df['년도'] >= 2022
+    ].copy()
+
+
+    # ARIMA 모델 학습
+    bt_model = ARIMA(
+        train['신항'],
+        order=(1, 1, 1)
+    )
+
+    bt_fit = bt_model.fit()
+
+
+    # 테스트 기간만큼 예측
+    bt_forecast = bt_fit.forecast(
+        steps=len(test)
+    )
+
+
+    # 비교 데이터프레임
+    backtest_result = pd.DataFrame({
+        '년도': test['년도'].values,
+        '실제물동량': test['신항'].values,
+        '예측물동량': bt_forecast.values
+    })
+
+
+    # 오차
+    backtest_result['오차'] = (
+        backtest_result['실제물동량']
+        - backtest_result['예측물동량']
+    )
+
+    backtest_result['절대오차'] = (
+        backtest_result['오차'].abs()
+    )
+
+
+    st.dataframe(
+        backtest_result.style.format({
+            '실제물동량': '{:,.0f}',
+            '예측물동량': '{:,.0f}',
+            '오차': '{:,.0f}',
+            '절대오차': '{:,.0f}'
+        }),
+        hide_index=True,
+        use_container_width=True
+    )
+        # ==========================================
+    # 평가 지표
+    # ==========================================
+
+    mae = mean_absolute_error(
+        backtest_result['실제물동량'],
+        backtest_result['예측물동량']
+    )
+
+    rmse = np.sqrt(
+        mean_squared_error(
+            backtest_result['실제물동량'],
+            backtest_result['예측물동량']
+        )
+    )
+
+    mape = (
+        np.abs(
+            (
+                backtest_result['실제물동량']
+                - backtest_result['예측물동량']
+            )
+            / backtest_result['실제물동량']
+        ).mean()
+        * 100
+    )
+
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            'MAE',
+            f'{mae:,.0f} TEU'
+        )
+
+    with col2:
+        st.metric(
+            'RMSE',
+            f'{rmse:,.0f} TEU'
+        )
+
+    with col3:
+        st.metric(
+            'MAPE',
+            f'{mape:.2f}%'
+        )
+
+    st.write('MAE : 평균적 몇 TEU 정도 틀렸는지')
+    st.write('RMSE : 오차에 벌점 지표')
+    st.write('MAPE: 평균적실제값 대비 오차 비율 ')
+
+    fig_bt = px.line(
+    backtest_result,
+    x='년도',
+    y=[
+        '실제물동량',
+        '예측물동량'
+    ],
+    markers=True,
+    title='신항 ARIMA 백테스트: 실제값 vs 예측값'
+)
+
+    fig_bt.update_xaxes(
+        tickmode='linear',
+        dtick=1
+    )
+
+    fig_bt.update_layout(
+        xaxis_title='년도',
+        yaxis_title='물동량 (TEU)',
+        legend_title='구분'
+    )
+
+    st.plotly_chart(
+        fig_bt,
+        use_container_width=True
+    )
+    st.write('예측이랑 실제 물동량이랑 오차율 2.35%')
+
+
+    st.write('---')
+    

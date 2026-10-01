@@ -17,7 +17,7 @@ def season_analysis():
         encoding='utf-8',
         header=[0, 1]
     )
-
+W
    
     # 데이터 전처리
     

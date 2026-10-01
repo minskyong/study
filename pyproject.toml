@@ -22,4 +22,5 @@ build-backend = "uv_build"
 [tool.uv.workspace]
 members = [
     "plotply",
+    "harbor",
 ]

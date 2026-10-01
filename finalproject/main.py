@@ -23,7 +23,7 @@ menu =st.sidebar.selectbox(
     label =     '메뉴선택',
 
     options = [ '전체 현황',
-                '년별 물동량 분석',
+                '부산항 물동량 중심지 분석',
                  '분기별 물동량 분석',
                 '수출입 분석',
                 '환적 분석',
@@ -33,7 +33,7 @@ menu =st.sidebar.selectbox(
 if menu == '전체 현황':
    port_ratio()
 
-elif menu == '년별 물동량 분석':
+elif menu == '부산항 물동량 중심지 분석':
     year_throughput()
 
 elif menu == '분기별 물동량 분석':

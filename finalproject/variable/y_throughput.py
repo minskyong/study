@@ -1,3 +1,5 @@
+
+# y_throughtput.py 원래 코드
 import statsmodels.api as sm
 import pandas as pd
 import streamlit as st
@@ -1147,4 +1149,5 @@ def year_throughput():
 
 
     st.write('---')
-    
+    st.write('단순 년도로만 예측하기엔 표본이 현저히 적음  \n'  
+             '12년~24년도의 각 월별로 산점도를 찍어 회귀선을 그어보는건 어떤가')

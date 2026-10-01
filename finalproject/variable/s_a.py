@@ -1,109 +1,75 @@
-#전체 코드
+# 전체 코드
 import pandas as pd
 import streamlit as st
 from pathlib import Path
 import plotly.express as px
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
-BASE_DIR = Path(__file__).resolve().parent.parent
-csv_PATH = BASE_DIR / 'data' / '월별물동량.csv'
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+csv_PATH = BASE_DIR / "data" / "월별물동량.csv"
 
 
 def season_analysis():
 
-    df = pd.read_csv(
-        csv_PATH,
-        encoding='utf-8',
-        header=[0, 1]
-    )
-W
-   
+    df = pd.read_csv(csv_PATH, encoding="utf-8", header=[0, 1])
+
     # 데이터 전처리
-    
+
     season_df = df[
         [
-            ('Unnamed: 0_level_0', '조회년도'),
-            ('Unnamed: 1_level_0', '조회월'),
-            ('Unnamed: 2_level_0', '국적선구분'),
-            ('TEU', '적'),
-            ('Unnamed: 16_level_0', '공'),
-            ('Unnamed: 17_level_0', '계')
+            ("Unnamed: 0_level_0", "조회년도"),
+            ("Unnamed: 1_level_0", "조회월"),
+            ("Unnamed: 2_level_0", "국적선구분"),
+            ("TEU", "적"),
+            ("Unnamed: 16_level_0", "공"),
+            ("Unnamed: 17_level_0", "계"),
         ]
     ].copy()
 
-    season_df.columns = [
-        '년도',
-        '월',
-        '국적선구분',
-        '적컨테이너',
-        '공컨테이너',
-        '총합'
-    ]
+    season_df.columns = ["년도", "월", "국적선구분", "적컨테이너", "공컨테이너", "총합"]
 
-    season_df['년도'] = season_df['년도'].ffill()
+    season_df["년도"] = season_df["년도"].ffill()
 
-    season_df['년도'] = pd.to_numeric(
-        season_df['년도'],
-        errors='coerce'
-    )
+    season_df["년도"] = pd.to_numeric(season_df["년도"], errors="coerce")
 
-    season_df['월'] = pd.to_numeric(
-        season_df['월'],
-        errors='coerce'
-    )
+    season_df["월"] = pd.to_numeric(season_df["월"], errors="coerce")
 
-    season_df = season_df[
-        season_df['국적선구분'] == '계'
-    ].copy()
+    season_df = season_df[season_df["국적선구분"] == "계"].copy()
 
-    season_df = season_df.dropna(
-        subset=['년도', '월']
-    )
+    season_df = season_df.dropna(subset=["년도", "월"])
 
-    season_df['년도'] = season_df['년도'].astype(int)
-    season_df['월'] = season_df['월'].astype(int)
+    season_df["년도"] = season_df["년도"].astype(int)
+    season_df["월"] = season_df["월"].astype(int)
 
-    for col in ['적컨테이너', '공컨테이너', '총합']:
+    for col in ["적컨테이너", "공컨테이너", "총합"]:
         season_df[col] = (
-            season_df[col]
-            .astype(str)
-            .str.replace(',', '', regex=False)
-            .str.strip()
+            season_df[col].astype(str).str.replace(",", "", regex=False).str.strip()
         )
 
-        season_df[col] = pd.to_numeric(
-            season_df[col],
-            errors='coerce'
-        )
+        season_df[col] = pd.to_numeric(season_df[col], errors="coerce")
 
-    season_df['date'] = pd.to_datetime(
-        dict(
-            year=season_df['년도'],
-            month=season_df['월'],
-            day=1
-        )
+    season_df["date"] = pd.to_datetime(
+        dict(year=season_df["년도"], month=season_df["월"], day=1)
     )
 
-    season_df = season_df.sort_values('date')
+    season_df = season_df.sort_values("date")
 
-
-    
     # 계절성 분석 탭
-    
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        '1. 월별 평균',
-        '2. 성수기 / 비수기',
-        '3. 12개월 이동평균',
-        '4. 월별 편차',
-        '5. 시계열 분해'
-    ])
-
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        [
+            "1. 월별 평균",
+            "2. 성수기 / 비수기",
+            "3. 12개월 이동평균",
+            "4. 월별 편차",
+            "5. 시계열 분해",
+        ]
+    )
 
     with tab1:
 
-        st.header('1. 월별 물동량 수준에 차이가 있는가?')
+        st.header("1. 월별 물동량 수준에 차이가 있는가?")
 
         st.markdown("""
         2012~2024년의 동일한 월끼리 묶어 평균 물동량을 계산한다.
@@ -112,63 +78,44 @@ W
         **월에 따라 물동량 수준에 차이가 존재하는지** 확인한다.
         """)
 
-    # 월별 평균 계산
-        monthly_avg = (
-            season_df
-            .groupby('월')['총합']
-            .mean()
-            .reset_index()
-        )
+        # 월별 평균 계산
+        monthly_avg = season_df.groupby("월")["총합"].mean().reset_index()
 
-        monthly_avg.columns = [
-            '월',
-            '평균물동량'
-        ]
-        monthly_avg['평균물동량_1000TEU'] = (monthly_avg['평균물동량']/1000)
-       
+        monthly_avg.columns = ["월", "평균물동량"]
+        monthly_avg["평균물동량_1000TEU"] = monthly_avg["평균물동량"] / 1000
+
         # 표 확인
-        st.dataframe(
-            monthly_avg,
-            use_container_width=True
-        )
+        st.dataframe(monthly_avg, use_container_width=True)
 
         # 그래프
         fig_monthly_avg = px.bar(
             monthly_avg,
-            x='월',
-            y='평균물동량_1000TEU',
-            title='2012~2024 월별 평균 컨테이너 물동량',
-            labels={
-                '월': '월',
-                '평균물동량_1000TEU': '평균 물동량(TEU)'
-            }
+            x="월",
+            y="평균물동량_1000TEU",
+            title="2012~2024 월별 평균 컨테이너 물동량",
+            labels={"월": "월", "평균물동량_1000TEU": "평균 물동량(TEU)"},
         )
 
         fig_monthly_avg.update_xaxes(
-            tickmode='array',
+            tickmode="array",
             tickvals=list(range(1, 13)),
-            ticktext=[f'{i}월' for i in range(1, 13)]
+            ticktext=[f"{i}월" for i in range(1, 13)],
         )
 
-        fig_monthly_avg.update_yaxes(
-            tickformat=',.0f'
-        )
-        #plotly 
+        fig_monthly_avg.update_yaxes(tickformat=",.0f")
+        # plotly
         fig_monthly_avg.add_annotation(
-        text='단위: 1,000 TEU',
-        x=1,
-        y=1.08,
-        xref='paper',
-        yref='paper',
-        showarrow=False,
-        xanchor='right'
-    )
-
+            text="단위: 1,000 TEU",
+            x=1,
+            y=1.08,
+            xref="paper",
+            yref="paper",
+            showarrow=False,
+            xanchor="right",
+        )
 
         st.plotly_chart(
-            fig_monthly_avg,
-            use_container_width=True,
-            key='monthly_avg_chart'
+            fig_monthly_avg, use_container_width=True, key="monthly_avg_chart"
         )
 
         st.markdown("""
@@ -183,7 +130,7 @@ W
 
     with tab2:
 
-        st.header('2. 상대적으로 물동량이 많은 시기는 언제인가?')
+        st.header("2. 상대적으로 물동량이 많은 시기는 언제인가?")
 
         st.markdown("""
         월별 평균 물동량을 전체 월 평균과 비교한다.
@@ -193,145 +140,96 @@ W
         """)
 
         # 월별 평균 계산
-        monthly_avg = (
-            season_df
-            .groupby('월')['총합']
-            .mean()
-            .reset_index()
-        )
+        monthly_avg = season_df.groupby("월")["총합"].mean().reset_index()
 
-        monthly_avg.columns = [
-            '월',
-            '평균물동량'
-        ]
+        monthly_avg.columns = ["월", "평균물동량"]
 
         # 전체 월 평균
-        overall_avg = monthly_avg['평균물동량'].mean()
+        overall_avg = monthly_avg["평균물동량"].mean()
 
         # 성수기 / 비수기 구분
-        monthly_avg['구분'] = monthly_avg['평균물동량'].apply(
-            lambda x:
-                '성수기' if x > overall_avg
-                else '비수기' if x < overall_avg
-                else '보통'
+        monthly_avg["구분"] = monthly_avg["평균물동량"].apply(
+            lambda x: (
+                "성수기" if x > overall_avg else "비수기" if x < overall_avg else "보통"
+            )
         )
 
         # 전체 평균과의 차이
-        monthly_avg['평균대비차이'] = (
-            monthly_avg['평균물동량'] - overall_avg
-        )
+        monthly_avg["평균대비차이"] = monthly_avg["평균물동량"] - overall_avg
 
         # 그래프 표시용 1,000 TEU 단위
-        monthly_avg['평균물동량_천TEU'] = (
-            monthly_avg['평균물동량'] / 1000
-        )
+        monthly_avg["평균물동량_천TEU"] = monthly_avg["평균물동량"] / 1000
 
         overall_avg_천TEU = overall_avg / 1000
 
-
         # 전체 평균 표시
-        st.metric(
-            '전체 월 평균 물동량 (1,000 TEU)',
-                 f'{overall_avg_천TEU:,.1f}'
-        )
-        
+        st.metric("전체 월 평균 물동량 (1,000 TEU)", f"{overall_avg_천TEU:,.1f}")
 
         # 표
-        
-         # 표 출력용
-        display_df = monthly_avg[
-            [
-                '월',
-                '평균물동량',
-                '평균대비차이',
-                '구분'
-            ]
-        ].copy()
+
+        # 표 출력용
+        display_df = monthly_avg[["월", "평균물동량", "평균대비차이", "구분"]].copy()
 
         # 화면 표시만 1,000 TEU 단위로 변환
-        display_df['평균물동량'] = (
-            display_df['평균물동량'] / 1000
-        )
+        display_df["평균물동량"] = display_df["평균물동량"] / 1000
 
-        display_df['평균대비차이'] = (
-            display_df['평균대비차이'] / 1000
-        )
+        display_df["평균대비차이"] = display_df["평균대비차이"] / 1000
 
         # 소수점 1자리
-        display_df['평균물동량'] = display_df['평균물동량'].round(1)
-        display_df['평균대비차이'] = display_df['평균대비차이'].round(1)
+        display_df["평균물동량"] = display_df["평균물동량"].round(1)
+        display_df["평균대비차이"] = display_df["평균대비차이"].round(1)
 
         # 표 컬럼명에 단위 표시
         display_df = display_df.rename(
             columns={
-                '평균물동량': '평균물동량 (1,000 TEU)',
-                '평균대비차이': '평균대비차이 (1,000 TEU)'
+                "평균물동량": "평균물동량 (1,000 TEU)",
+                "평균대비차이": "평균대비차이 (1,000 TEU)",
             }
         )
 
-        st.dataframe(
-            display_df,
-            use_container_width=True,
-            hide_index=True
-        )
-
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
 
         # 그래프
         fig_peak = px.line(
             monthly_avg,
-            x='월',
-            y='평균물동량_천TEU',
+            x="월",
+            y="평균물동량_천TEU",
             markers=True,
-            title='월별 평균 물동량과 전체 평균 비교',
-            labels={
-                '월': '월',
-                '평균물동량_천TEU': '평균 물동량'
-            }
+            title="월별 평균 물동량과 전체 평균 비교",
+            labels={"월": "월", "평균물동량_천TEU": "평균 물동량"},
         )
-
 
         # 전체 평균 기준선
         fig_peak.add_hline(
             y=overall_avg_천TEU,
-            line_dash='dash',
-            annotation_text=f'<b>전체 평균 : {overall_avg_천TEU:,.1f}</b>',
-            annotation_position='top left',
-            annotation_font_size=13
+            line_dash="dash",
+            annotation_text=f"<b>전체 평균 : {overall_avg_천TEU:,.1f}</b>",
+            annotation_position="top left",
+            annotation_font_size=13,
         )
-
 
         # X축
         fig_peak.update_xaxes(
-            tickmode='array',
+            tickmode="array",
             tickvals=list(range(1, 13)),
-            ticktext=[f'{i}월' for i in range(1, 13)]
+            ticktext=[f"{i}월" for i in range(1, 13)],
         )
-
 
         # Y축
-        fig_peak.update_yaxes(
-            tickformat=',.0f'
-        )
-
+        fig_peak.update_yaxes(tickformat=",.0f")
 
         # 그래프 우측 상단 단위 표시
         fig_peak.add_annotation(
-            text='단위: 1,000 TEU',
+            text="단위: 1,000 TEU",
             x=1,
             y=1.08,
-            xref='paper',
-            yref='paper',
+            xref="paper",
+            yref="paper",
             showarrow=False,
-            xanchor='right'
+            xanchor="right",
         )
 
-
-        st.plotly_chart(
-            fig_peak,
-            use_container_width=True,
-            key='peak_chart'
-        )
-
+        st.plotly_chart(fig_peak, use_container_width=True, key="peak_chart")
 
         st.markdown("""
         **분석 결과**
@@ -345,8 +243,6 @@ W
         **→ 그런데 이 차이가 장기적인 물동량 증가나 감소 때문에 나타난 것은 아닐까?**
         """)
         with tab3:
-
-            
 
             st.markdown("""
             ## 3. 장기적으로 물동량은 어떻게 변화했는가?
@@ -384,85 +280,53 @@ W
             """)
 
             # 12개월 이동평균 계산
-            season_df['12개월이동평균'] = (
-                season_df['총합']
-                .rolling(12)
-                .mean()
-            )
+            season_df["12개월이동평균"] = season_df["총합"].rolling(12).mean()
 
             # 그래프 표시용 1,000 TEU 단위
-            season_df['총합_천TEU'] = (
-                season_df['총합'] / 1000
-            )
+            season_df["총합_천TEU"] = season_df["총합"] / 1000
 
-            season_df['12개월이동평균_천TEU'] = (
-                season_df['12개월이동평균'] / 1000
-            )
-
+            season_df["12개월이동평균_천TEU"] = season_df["12개월이동평균"] / 1000
 
             # 그래프
             fig_moving = px.line(
                 season_df,
-                x='date',
-                y=[
-                    '총합_천TEU',
-                    '12개월이동평균_천TEU'
-                ],
-                title='부산항 월별 물동량과 12개월 이동평균',
-                labels={
-                    'date': '연도',
-                    'value': '물동량',
-                    'variable': ''
-                }
+                x="date",
+                y=["총합_천TEU", "12개월이동평균_천TEU"],
+                title="부산항 월별 물동량과 12개월 이동평균",
+                labels={"date": "연도", "value": "물동량", "variable": ""},
             )
-
 
             # 범례 이름 변경
             fig_moving.for_each_trace(
                 lambda trace: trace.update(
                     name={
-                        '총합_천TEU': '월별 물동량',
-                        '12개월이동평균_천TEU': '12개월 이동평균'
+                        "총합_천TEU": "월별 물동량",
+                        "12개월이동평균_천TEU": "12개월 이동평균",
                     }.get(trace.name, trace.name)
                 )
             )
 
-
             # Y축 숫자 형식
-            fig_moving.update_yaxes(
-                tickformat=',.0f'
-            )
-
+            fig_moving.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_moving.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
-
 
             # 범례
-            fig_moving.update_layout(
-                legend=dict(
-                    orientation='h',
-                    x=0,
-                    y=1.08
-                )
-            )
-
+            fig_moving.update_layout(legend=dict(orientation="h", x=0, y=1.08))
 
             st.plotly_chart(
-                fig_moving,
-                use_container_width=True,
-                key='moving_average_chart'
+                fig_moving, use_container_width=True, key="moving_average_chart"
             )
-
 
             st.markdown("""
             ### **단순 그래프로만 파악 가능한 점**
@@ -483,8 +347,7 @@ W
             전체적인 물동량 수준이 증가하는 흐름으로 볼 수 있다.
             - 이동평균이 상승하다 하락하거나, 하락하다 상승하는 구간은
             장기적인 물동량 흐름이 변화하는 시점으로 볼 수 있다.
-            """
-            )
+            """)
             st.markdown("""
             ### 분석 결과
 
@@ -557,11 +420,9 @@ W
             특정 월이 반복적으로 높거나 낮게 나타나는가?**
             """)
 
-
-
         with tab4:
 
-            st.header('4. 월별 물동량은 전체 평균에서 얼마나 차이가 나는가?')
+            st.header("4. 월별 물동량은 전체 평균에서 얼마나 차이가 나는가?")
 
             st.markdown("""
             앞선 분석에서는 월별 평균을 이용하여 상대적으로 물동량이 높은 달과
@@ -585,108 +446,79 @@ W
             """)
 
             # 월별 평균 계산
-            monthly_avg = (
-                season_df
-                .groupby('월')['총합']
-                .mean()
-                .reset_index()
-            )
+            monthly_avg = season_df.groupby("월")["총합"].mean().reset_index()
 
-            monthly_avg.columns = [
-                '월',
-                '평균물동량'
-            ]
+            monthly_avg.columns = ["월", "평균물동량"]
 
             # 전체 월 평균
-            overall_avg = monthly_avg['평균물동량'].mean()
+            overall_avg = monthly_avg["평균물동량"].mean()
 
             # 월별 편차
-            monthly_avg['평균대비차이'] = (
-                monthly_avg['평균물동량'] - overall_avg
-            )
+            monthly_avg["평균대비차이"] = monthly_avg["평균물동량"] - overall_avg
 
             # 화면 표시용 1,000 TEU
-            monthly_avg['평균대비차이_천TEU'] = (
-                monthly_avg['평균대비차이'] / 1000
-            )
+            monthly_avg["평균대비차이_천TEU"] = monthly_avg["평균대비차이"] / 1000
 
             # 표 출력용
-            display_deviation = monthly_avg[
-                [
-                    '월',
-                    '평균물동량',
-                    '평균대비차이'
-                ]
-            ].copy()
+            display_deviation = monthly_avg[["월", "평균물동량", "평균대비차이"]].copy()
 
-            display_deviation['평균물동량'] = (
-                display_deviation['평균물동량'] / 1000
+            display_deviation["평균물동량"] = (
+                display_deviation["평균물동량"] / 1000
             ).round(1)
 
-            display_deviation['평균대비차이'] = (
-                display_deviation['평균대비차이'] / 1000
+            display_deviation["평균대비차이"] = (
+                display_deviation["평균대비차이"] / 1000
             ).round(1)
 
             display_deviation = display_deviation.rename(
                 columns={
-                    '평균물동량': '평균물동량 (1,000 TEU)',
-                    '평균대비차이': '평균대비차이 (1,000 TEU)'
+                    "평균물동량": "평균물동량 (1,000 TEU)",
+                    "평균대비차이": "평균대비차이 (1,000 TEU)",
                 }
             )
 
-            st.dataframe(
-                display_deviation,
-                use_container_width=True,
-                hide_index=True
-            )
+            st.dataframe(display_deviation, use_container_width=True, hide_index=True)
 
             # 월별 편차 그래프
             fig_deviation = px.bar(
                 monthly_avg,
-                x='월',
-                y='평균대비차이_천TEU',
-                title='월별 평균 물동량의 전체 평균 대비 편차',
-                labels={
-                    '월': '월',
-                    '평균대비차이_천TEU': '전체 평균 대비 편차'
-                }
+                x="월",
+                y="평균대비차이_천TEU",
+                title="월별 평균 물동량의 전체 평균 대비 편차",
+                labels={"월": "월", "평균대비차이_천TEU": "전체 평균 대비 편차"},
             )
 
             # 편차 0 기준선
             fig_deviation.add_hline(
                 y=0,
-                line_dash='dash',
-                annotation_text='<b>전체 평균 기준</b>',
-                annotation_position='top left',
-                annotation_font_size=16
+                line_dash="dash",
+                annotation_text="<b>전체 평균 기준</b>",
+                annotation_position="top left",
+                annotation_font_size=16,
             )
 
             fig_deviation.update_xaxes(
-                tickmode='array',
+                tickmode="array",
                 tickvals=list(range(1, 13)),
-                ticktext=[f'{i}월' for i in range(1, 13)]
+                ticktext=[f"{i}월" for i in range(1, 13)],
             )
 
-            fig_deviation.update_yaxes(
-                tickformat=',.0f'
-            )
+            fig_deviation.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_deviation.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
 
             st.plotly_chart(
-                fig_deviation,
-                use_container_width=True,
-                key='deviation_chart'
+                fig_deviation, use_container_width=True, key="deviation_chart"
             )
 
             st.markdown("""
@@ -706,10 +538,9 @@ W
             아니면 장기 추세를 제거한 뒤에도 반복적으로 나타나는 계절적 패턴일까?**
             """)
 
-
         with tab5:
 
-            st.header('5. 장기추세와 계절성을 분리하면 어떤 패턴이 나타나는가?')
+            st.header("5. 장기추세와 계절성을 분리하면 어떤 패턴이 나타나는가?")
 
             st.markdown("""
             앞선 분석에서는 월별 평균 물동량에 차이가 있다는 것을 확인하였다.
@@ -736,131 +567,103 @@ W
             """)
 
             # 날짜를 인덱스로 설정하여 시계열 데이터 생성
-            ts = (
-                season_df
-                .set_index('date')['총합']
-                .sort_index()
-            )
+            ts = season_df.set_index("date")["총합"].sort_index()
 
             # 시계열 분해
-            decomposition = seasonal_decompose(
-                ts,
-                model='additive',
-                period=12
-            )
+            decomposition = seasonal_decompose(ts, model="additive", period=12)
 
             # 분해 결과 데이터프레임
-            decomp_df = pd.DataFrame({
-                'date': ts.index,
-                '실제 물동량': ts.values,
-                '장기추세': decomposition.trend.values,
-                '계절성': decomposition.seasonal.values,
-                '잔차': decomposition.resid.values
-            })
+            decomp_df = pd.DataFrame(
+                {
+                    "date": ts.index,
+                    "실제 물동량": ts.values,
+                    "장기추세": decomposition.trend.values,
+                    "계절성": decomposition.seasonal.values,
+                    "잔차": decomposition.resid.values,
+                }
+            )
 
-        
-                # ==========================================
+            # ==========================================
             # 5-1. Trend(장기추세)
             # ==========================================
 
             # 그래프 표시용 1,000 TEU
-            decomp_df['장기추세_천TEU'] = (
-                decomp_df['장기추세'] / 1000
-            )
+            decomp_df["장기추세_천TEU"] = decomp_df["장기추세"] / 1000
 
             fig_trend = px.line(
                 decomp_df,
-                x='date',
-                y='장기추세_천TEU',
-                title='부산항 컨테이너 물동량의 장기추세(Trend)',
-                labels={
-                    'date': '연도',
-                    '장기추세_천TEU': '장기추세'
-                }
+                x="date",
+                y="장기추세_천TEU",
+                title="부산항 컨테이너 물동량의 장기추세(Trend)",
+                labels={"date": "연도", "장기추세_천TEU": "장기추세"},
             )
 
-            fig_trend.update_yaxes(
-                tickformat=',.0f'
-            )
+            fig_trend.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_trend.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
 
-            st.plotly_chart(
-                fig_trend,
-                use_container_width=True,
-                key='trend_chart'
-            )
+            st.plotly_chart(fig_trend, use_container_width=True, key="trend_chart")
 
-
-              # 그래프 표시용 1,000 TEU
-            decomp_df['계절성_천TEU'] = (
-                decomp_df['계절성'] / 1000
-            )
+            # 그래프 표시용 1,000 TEU
+            decomp_df["계절성_천TEU"] = decomp_df["계절성"] / 1000
 
             fig_seasonal = px.line(
                 decomp_df,
-                x='date',
-                y='계절성_천TEU',
-                title='부산항 컨테이너 물동량의 계절성(Seasonal)',
-                labels={
-                    'date': '연도',
-                    '계절성_천TEU': '계절적 효과'
-                }
+                x="date",
+                y="계절성_천TEU",
+                title="부산항 컨테이너 물동량의 계절성(Seasonal)",
+                labels={"date": "연도", "계절성_천TEU": "계절적 효과"},
             )
 
             # 계절성 0 기준선
             fig_seasonal.add_hline(
                 y=0,
-                line_dash='dash',
-                annotation_text='<b>계절적 효과 0</b>',
-                annotation_position='top left',
-                annotation_font_size=16
+                line_dash="dash",
+                annotation_text="<b>계절적 효과 0</b>",
+                annotation_position="top left",
+                annotation_font_size=16,
             )
 
-            fig_seasonal.update_yaxes(
-                tickformat=',.0f'
-            )
+            fig_seasonal.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_seasonal.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
 
             st.plotly_chart(
-                fig_seasonal,
-                use_container_width=True,
-                key='seasonal_chart'
+                fig_seasonal, use_container_width=True, key="seasonal_chart"
             )
-                    # 5-2-1. 월별 대표 계절 효과
+            # 5-2-1. 월별 대표 계절 효과
             # ==========================================
 
             # 계절성 값에서 대표 12개월 추출
-            seasonal_pattern = pd.DataFrame({
-                '월': list(range(1, 13)),
-                '계절효과': decomposition.seasonal.iloc[:12].values
-            })
+            seasonal_pattern = pd.DataFrame(
+                {
+                    "월": list(range(1, 13)),
+                    "계절효과": decomposition.seasonal.iloc[:12].values,
+                }
+            )
 
             # 1,000 TEU 단위
-            seasonal_pattern['계절효과_천TEU'] = (
-                seasonal_pattern['계절효과'] / 1000
-            )
+            seasonal_pattern["계절효과_천TEU"] = seasonal_pattern["계절효과"] / 1000
 
             st.markdown("""
             ### 월별 대표 계절 효과
@@ -875,52 +678,45 @@ W
 
             fig_seasonal_month = px.bar(
                 seasonal_pattern,
-                x='월',
-                y='계절효과_천TEU',
-                title='월별 대표 계절 효과',
-                labels={
-                    '월': '월',
-                    '계절효과_천TEU': '계절적 효과'
-                }
+                x="월",
+                y="계절효과_천TEU",
+                title="월별 대표 계절 효과",
+                labels={"월": "월", "계절효과_천TEU": "계절적 효과"},
             )
 
             # 0 기준선
             fig_seasonal_month.add_hline(
                 y=0,
-                line_dash='dash',
-                annotation_text='<b>계절 효과 0</b>',
-                annotation_position='top left',
-                annotation_font_size=16
+                line_dash="dash",
+                annotation_text="<b>계절 효과 0</b>",
+                annotation_position="top left",
+                annotation_font_size=16,
             )
 
             # X축 1월~12월
             fig_seasonal_month.update_xaxes(
-                tickmode='array',
+                tickmode="array",
                 tickvals=list(range(1, 13)),
-                ticktext=[f'{i}월' for i in range(1, 13)]
+                ticktext=[f"{i}월" for i in range(1, 13)],
             )
 
             # Y축
-            fig_seasonal_month.update_yaxes(
-                tickformat=',.0f'
-            )
+            fig_seasonal_month.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_seasonal_month.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
 
             st.plotly_chart(
-                fig_seasonal_month,
-                use_container_width=True,
-                key='seasonal_month_chart'
+                fig_seasonal_month, use_container_width=True, key="seasonal_month_chart"
             )
 
             st.markdown("""
@@ -949,9 +745,7 @@ W
                 월별 평균뿐 아니라 장기추세를 분리한 계절 효과를 함께 고려할 필요가 있다.
                 """)
 
-
-
-                            # ==========================================
+            # ==========================================
             # 5-3. Residual(잔차)
             # ==========================================
 
@@ -974,48 +768,39 @@ W
             """)
 
             # 그래프 표시용 1,000 TEU
-            decomp_df['잔차_천TEU'] = (
-                decomp_df['잔차'] / 1000
-            )
+            decomp_df["잔차_천TEU"] = decomp_df["잔차"] / 1000
 
             fig_residual = px.bar(
                 decomp_df,
-                x='date',
-                y='잔차_천TEU',
-                title='부산항 컨테이너 물동량의 잔차(Residual)',
-                labels={
-                    'date': '연도',
-                    '잔차_천TEU': '잔차'
-                }
+                x="date",
+                y="잔차_천TEU",
+                title="부산항 컨테이너 물동량의 잔차(Residual)",
+                labels={"date": "연도", "잔차_천TEU": "잔차"},
             )
 
             # 잔차 0 기준선
             fig_residual.add_hline(
                 y=0,
-                line_dash='dash',
-                annotation_text='<b>잔차 0</b>',
-                annotation_position='top left',
-                annotation_font_size=16
+                line_dash="dash",
+                annotation_text="<b>잔차 0</b>",
+                annotation_position="top left",
+                annotation_font_size=16,
             )
 
-            fig_residual.update_yaxes(
-                tickformat=',.0f'
-            )
+            fig_residual.update_yaxes(tickformat=",.0f")
 
             # 우측 상단 단위
             fig_residual.add_annotation(
-                text='<b>단위: 1,000 TEU</b>',
+                text="<b>단위: 1,000 TEU</b>",
                 x=1,
                 y=1.08,
-                xref='paper',
-                yref='paper',
+                xref="paper",
+                yref="paper",
                 showarrow=False,
-                xanchor='right',
-                font=dict(size=14)
+                xanchor="right",
+                font=dict(size=14),
             )
 
             st.plotly_chart(
-                fig_residual,
-                use_container_width=True,
-                key='residual_chart'
+                fig_residual, use_container_width=True, key="residual_chart"
             )

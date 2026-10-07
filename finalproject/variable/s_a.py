@@ -57,13 +57,14 @@ def season_analysis():
 
     # 계절성 분석 탭
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
         [
             "1. 월별 평균",
             "2. 성수기 / 비수기",
             "3. 12개월 이동평균",
             "4. 월별 편차",
             "5. 시계열 분해",
+            "6. KPI"
         ]
     )
 
@@ -804,3 +805,28 @@ def season_analysis():
             st.plotly_chart(
                 fig_residual, use_container_width=True, key="residual_chart"
             )
+
+            st.write('---')
+            st.markdown("""
+                잔차 기준 큰 음수 보이는 년도 : 2022년 
+
+                증감 몇 이상부터 크다는 기준?
+
+                잔차 폭이 큰 쪽 사건 있는지 확인하기
+                ex). 코로나 / 호르무즈  등등 
+
+                계절적 특성을 해석할 때는 월별 평균뿐 아니라 
+                
+                장기추세를 분리한 계절 효과를 함께 고려할 필요가 있다.
+
+
+
+
+            """)
+        with tab6:
+            st.markdown("""
+
+            전체 월 평균 | 최근 12개월 평균 | 최대 계절효과 월 | 최소 계절효과 월 | 계절 변동폭
+
+        
+            """)
